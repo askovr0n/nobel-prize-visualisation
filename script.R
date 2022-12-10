@@ -26,7 +26,7 @@ nobel_data <- read.csv('data/nobel_data.csv')
 
 theme_set(theme_minimal(#base_size = 10
   ) + 
-            theme(plot.title = element_text(face="bold", family="Quicksand"),
+            theme(plot.title = element_text(face="bold", family="Quicksand", size = 18),
                   text = element_text(family="Quicksand"),
                   legend.direction = "vertical",
                   legend.box = "vertical",
@@ -136,8 +136,8 @@ ggplot(age_data, aes(x = awardYear, y = age_years)) +
                      values = c(nobelgold, "red"),
                      labels = c("between 30 and 90", "less than 30 or more than 90")) +
   labs(title = 'Age of laureates at the time of receiving the Nobel Prize', 
-       x = '', 
-       y = '', 
+       x = 'Year', 
+       y = 'Age', 
        col='') +
   geom_text_repel(aes(label = ifelse(age_years <= 30 | age_years >= 90, as.character(name), "")),
                   size = 3.5,
