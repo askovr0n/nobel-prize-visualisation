@@ -6,7 +6,64 @@ library(ggplot2)
 nobel_data <- read.csv('data/nobel_data.csv')
 
 
-# Pre processing
+# Settings ----
+
+## ggplot custom theme ----
+
+nobel_price_custom_theme <- theme_minimal(base_size = 20) + 
+  theme(plot.title = element_text(face = "bold"))
+
+## color ----
+
+lau = '#f9d56e' # gold
+
+male =  "#97e5ef" # blue
+female = "#efa8e4" # pink
+
+ind = '#ffa5b0' # smoke
+org = '#45046a' # purple
+
+rec = '#b9cced' # light blue-violet
+dec = '#f64b3c' # red
+res = '#434e52' # black
+
+phy = "#fe91ca" # light pink
+che = "#7fdbda" # light cyan
+med = "#ade498" # light green
+pea = "#ede682" # light yellow
+lit = "#abc2e8" # light blue
+ecn = "#febf63" # light orange
+
+## palette ----
+
+# gender
+gen_pal <- c(male, female) 
+
+# individual - organization
+org_pal <- c(ind, org) 
+
+# male - female - org
+mfo_pal <- c(male, female, org)
+names(mfo_pal) <- c('Male', 'Female', 'Organization')
+
+# received - declined - restricted
+status_pal <- c(rec, dec, res)
+names(status_pal) <- c('Received', 'Declined', 'Restricted')
+
+# category palette
+cat_pal <- c(phy, che ,med ,pea ,lit ,ecn)
+names(cat_pal) <- c('Physics', 'Chemistry', 'Physiology or Medicine',
+                    'Peace', 'Literature', 'Economic Sciences')
+
+# share palette
+share_pal <- c("#beeb9f", "#00a388", "#f96b85")
+
+# per 20 years
+per_20_pal = c('#ffbd39', '#f76b8a', '#ff8264', '#17b978', '#005691', '#1b262c')
+
+
+
+# Pre processing ----
 
 nobel_data <- mutate(nobel_data, birth_date = ifelse(birth_date == "1943-00-00", "1943-11-07", birth_date))
 
@@ -42,7 +99,7 @@ age_data <- nobel_data %>%
   select(awardYear, category, gender, age_days, age_years, name)
 
 
-age_stats %>%
+age_stats <- nobel_data %>%
   drop_na(age_years) %>%
   group_by(category) %>%
   summarize(mean_age = mean(age_years), 
@@ -55,12 +112,28 @@ ggplot(age_data, aes(x = awardYear, y = age_years, col = cut(age_years, 6))) +
   #     scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 20), expand = c(0, 0)) +
   labs(title = 'Age of laureates at the time of receiving the Nobel Prize', x = '', y = '', col='') +
   #geom_text_repel(aes(label = ifelse(age_years <= 30 | age_years >= 90, as.character(name), "")), size = 6) +
-  theme(legend.position='top', legend.justification = "left") + 
-  guides(colour = guide_legend(nrow = 1))
+  theme(legend.direction = "vertical",
+        legend.box = "vertical",
+        #legend.position = c(0.025,0.975),
+        #legend.justification = c(0, 1)
+        )# +
+  #guides(colour = guide_legend(nrow = 1))
 
 
-# 2nd plot - Artur ----
+# 2nd plot (Age of Nobel Laureates over the years) - Szymon ----
 
-# 3rd plot - Szymon ----
+ggplot(age_data, aes(x = awardYear, y = age_years, col = category)) +
+  geom_point(size = 4, alpha= 0.5) +
+  geom_smooth(formula = y ~ x, method = 'loess', se = FALSE, size = 2) +
+  #     geom_hline(data = age_stats, aes(yintercept = mean_age), 
+  #                col = 'black', alpha = 0.5, size = 1) +
+  labs(title = 'Age of Nobel Laureates over the years', x = '', y = '') +
+  facet_wrap(vars(category), nrow = 2) + 
+  theme(legend.position = "none", panel.spacing.x = unit(2, "lines")) + 
+  scale_colour_manual(values = cat_pal)
+
+
+
+# 3rd plot - Artur ----
 
 # 4rd plot - Artur ----
