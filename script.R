@@ -36,7 +36,7 @@ theme_set(theme_minimal(#base_size = 10
 
 ## color ----
 
-lau = '#f9d56e' # gold
+nobelgold = "#d1c700" # gold
 
 male =  "#97e5ef" # blue
 female = "#efa8e4" # pink
@@ -119,7 +119,6 @@ age_data <- nobel_data %>%
   drop_na(age_years) %>%
   select(awardYear, category, gender, age_days, age_years, name)
 
-
 age_stats <- nobel_data %>%
   drop_na(age_years) %>%
   group_by(category) %>%
@@ -127,12 +126,25 @@ age_stats <- nobel_data %>%
             median_age = median(age_years))
 
 
-ggplot(age_data, aes(x = awardYear, y = age_years, col = cut(age_years, 6))) +
-  geom_point(size = 7, alpha = 0.5) + 
-  #     scale_x_continuous(limits = c(1899, 2021), breaks = seq(1900, 2020, 20), expand = c(0, 0)) +
-  #     scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 20), expand = c(0, 0)) +
-  labs(title = 'Age of laureates at the time of receiving the Nobel Prize', x = '', y = '', col='') +
-  geom_text_repel(aes(label = ifelse(age_years <= 30 | age_years >= 90, as.character(name), "")), size = 6)
+ggplot(age_data, aes(x = awardYear, y = age_years)) +
+  geom_point(aes(colour = ifelse(age_years <= 30 | age_years >= 90, "red", "#d1c700")),
+             size = 7,
+             alpha = 0.5) + 
+  geom_smooth(color = "#3d3d3d",
+              alpha=0.3) +
+  scale_color_manual(name = "Age",
+                     values = c(nobelgold, "red"),
+                     labels = c("between 30 and 90", "less than 30 or more than 90")) +
+  labs(title = 'Age of laureates at the time of receiving the Nobel Prize', 
+       x = '', 
+       y = '', 
+       col='') +
+  geom_text_repel(aes(label = ifelse(age_years <= 30 | age_years >= 90, as.character(name), "")),
+                  size = 3.5,
+                  family = "Quicksand") +
+  theme(legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.box = "horizontal")
 ggsave("plots/plot1.png", dpi=150)
   
   
@@ -146,6 +158,7 @@ ggplot(age_data, aes(x = awardYear, y = age_years, col = category)) +
   theme(legend.position = "none", panel.spacing.x = unit(2, "lines")) + 
   scale_colour_manual(values = cat_pal)
 ggsave("plots/plot2.png", dpi=150)
+
 
 # 3rd plot - Artur ----
 
