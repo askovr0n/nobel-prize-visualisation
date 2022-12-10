@@ -2,6 +2,16 @@ library(tidyverse)
 library(tidyr)
 library(lubridate)
 library(ggplot2)
+library(ggrepel)
+
+#install.packages('showtext', dependencies = TRUE)
+library(showtext)
+font_add_google("Quicksand", "Quicksand") # https://fonts.google.com/
+#font_families()
+showtext_auto()
+
+
+# Data ----
 
 nobel_data <- read.csv('data/nobel_data.csv')
 
@@ -10,8 +20,19 @@ nobel_data <- read.csv('data/nobel_data.csv')
 
 ## ggplot custom theme ----
 
-nobel_price_custom_theme <- theme_minimal(base_size = 20) + 
-  theme(plot.title = element_text(face = "bold"))
+# nobel_price_custom_theme <- theme_minimal(base_size = 10) + 
+#   theme(plot.title = element_text(face="bold", family="Quicksand"),
+#         text = element_text(family="Quicksand"))
+
+theme_set(theme_minimal(#base_size = 10
+  ) + 
+            theme(plot.title = element_text(face="bold", family="Quicksand"),
+                  text = element_text(family="Quicksand"),
+                  legend.direction = "vertical",
+                  legend.box = "vertical",
+            )
+)
+
 
 ## color ----
 
@@ -111,28 +132,20 @@ ggplot(age_data, aes(x = awardYear, y = age_years, col = cut(age_years, 6))) +
   #     scale_x_continuous(limits = c(1899, 2021), breaks = seq(1900, 2020, 20), expand = c(0, 0)) +
   #     scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 20), expand = c(0, 0)) +
   labs(title = 'Age of laureates at the time of receiving the Nobel Prize', x = '', y = '', col='') +
-  #geom_text_repel(aes(label = ifelse(age_years <= 30 | age_years >= 90, as.character(name), "")), size = 6) +
-  theme(legend.direction = "vertical",
-        legend.box = "vertical",
-        #legend.position = c(0.025,0.975),
-        #legend.justification = c(0, 1)
-        )# +
-  #guides(colour = guide_legend(nrow = 1))
-
-
+  geom_text_repel(aes(label = ifelse(age_years <= 30 | age_years >= 90, as.character(name), "")), size = 6)
+ggsave("plots/plot1.png", dpi=150)
+  
+  
 # 2nd plot (Age of Nobel Laureates over the years) - Szymon ----
 
 ggplot(age_data, aes(x = awardYear, y = age_years, col = category)) +
   geom_point(size = 4, alpha= 0.5) +
   geom_smooth(formula = y ~ x, method = 'loess', se = FALSE, size = 2) +
-  #     geom_hline(data = age_stats, aes(yintercept = mean_age), 
-  #                col = 'black', alpha = 0.5, size = 1) +
   labs(title = 'Age of Nobel Laureates over the years', x = '', y = '') +
   facet_wrap(vars(category), nrow = 2) + 
   theme(legend.position = "none", panel.spacing.x = unit(2, "lines")) + 
   scale_colour_manual(values = cat_pal)
-
-
+ggsave("plots/plot2.png", dpi=150)
 
 # 3rd plot - Artur ----
 
