@@ -26,8 +26,10 @@ nobel_data <- read.csv('data/nobel_data.csv')
 
 theme_set(theme_minimal(#base_size = 10
   ) + 
-            theme(plot.title = element_text(face="bold", family="Quicksand", size = 18),
-                  text = element_text(family="Quicksand"),
+            theme(plot.title = element_text(face="bold", family="Quicksand", size = 50),
+                  text = element_text(family="Quicksand", size = 20),
+                  axis.text=element_text(size=20),
+                  axis.title=element_text(size=25, face="bold"),
                   legend.direction = "vertical",
                   legend.box = "vertical",
             )
@@ -128,7 +130,7 @@ age_stats <- nobel_data %>%
 
 ggplot(age_data, aes(x = awardYear, y = age_years)) +
   geom_point(aes(colour = ifelse(age_years <= 30 | age_years >= 90, "red", "#d1c700")),
-             size = 7,
+             size = 5,
              alpha = 0.5) + 
   geom_smooth(color = "#3d3d3d",
               alpha=0.3) +
@@ -140,12 +142,12 @@ ggplot(age_data, aes(x = awardYear, y = age_years)) +
        y = 'Age', 
        col='') +
   geom_text_repel(aes(label = ifelse(age_years <= 30 | age_years >= 90, as.character(name), "")),
-                  size = 3.5,
+                  size = 10,
                   family = "Quicksand") +
   theme(legend.position = "bottom",
         legend.direction = "horizontal",
         legend.box = "horizontal")
-ggsave("plots/plot1.png", dpi=150)
+ggsave("plots/plot1.png", dpi=300)
   
   
 # 2nd plot (Age of Nobel Laureates over the years) - Szymon ----

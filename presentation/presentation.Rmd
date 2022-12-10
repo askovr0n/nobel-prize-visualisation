@@ -1,0 +1,37 @@
+---
+title: "Nobel Prize Data Analysis"
+subtitle: "Advanced Visualization in R - Project presentation"
+author: "Szymon Socha, Artur Skowroński"
+date: "`r Sys.Date()`"
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+# Data
+
+
+## Dataset description
+
+
+
+
+# Visualization
+
+
+## Plot 1
+
+
+## Plot 2
+
+
+## Plot 3
+
+
+## Plot 4
+
+
+## Plot 5
