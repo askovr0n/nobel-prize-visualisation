@@ -137,4 +137,63 @@ ggplot(nobel.agg, aes(x = age_years_cut, y = category)) + # nowa baza danych
        x = "Age",
        y = "Category") +
   scale_fill_gradient(low = 'green3', high = 'orange')
-  
+
+# Plot 6 - interactive (https://rpubs.com/abigailchen/nobelprize)
+library(gganimate)
+ggplot(nobel, aes(awardYear, age_years, group = awardYear, fill = age_years)) +
+  xlab("Prize year") +
+  ylab("Age") +
+  labs(fill = "Age", group = "Prize Year", title = "Laureate Age across the Years") +
+  geom_boxplot() +
+  theme(legend.position = "top", panel.background = element_rect(fill = NA),
+        panel.border = element_blank(), axis.text=element_text(size=8), 
+        plot.title = element_text(size = 12L, face = "bold", hjust = 0.5) ) +
+  # scale_fill_viridis() +
+  transition_reveal(awardYear)+ 
+  # scale_colour_wsj("colors6") +
+  enter_grow() +
+  enter_fade() +
+  ease_aes("back-in")
+
+#Plot 7 - Nobel Prize Winners'Historical Average Age
+# https://medium.com/@TechTeamMarketFinance/exploring-nobel-prize-winners-with-r-b636875ee28f
+
+avreage_age_nobel <- nobel %>%  
+  group_by(category, awardYear) %>% 
+  summarize (avg_age = mean(age_years, na.rm = TRUE))
+
+ggplot(avreage_age_nobel, aes(x = awardYear, y = avg_age) ) +
+  geom_point() + geom_smooth(method = "lm") + facet_wrap(~ category) +
+  geom_hline(data=filter(avreage_age_nobel, category =="Chemistry"), aes(yintercept= 55.6), 
+             colour="red", linetype = 'dashed') +
+  geom_hline(data=filter(avreage_age_nobel, category =="Economic Sciences"), aes(yintercept= 63.3), 
+             colour="red", linetype = 'dashed') +
+  geom_hline(data=filter(avreage_age_nobel, category =="Literature"), aes(yintercept= 62.6), 
+             colour="red", linetype = 'dashed') +
+  geom_hline(data=filter(avreage_age_nobel, category =="Physiology or Medicine"), aes(yintercept= 55.5), 
+             colour="red", linetype = 'dashed') +
+  geom_hline(data=filter(avreage_age_nobel, category =="Peace"), aes(yintercept= 58.7), 
+             colour="red", linetype = 'dashed') +
+  geom_hline(data=filter(avreage_age_nobel, category =="Physics"), aes(yintercept= 53), 
+             colour="red", linetype = 'dashed') +
+  labs(title = "Nobel Prize Winners'Historical Average Age") +
+  xlab("Year") +
+  ylab("Average Age") +
+  theme(axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.title = element_text(size = 15, face = "bold"))
+
+table(nobel$category)
+
+# Plot 8- Distribution of Nobel Prizes over time by category
+# https://medium.com/@TechTeamMarketFinance/exploring-nobel-prize-winners-with-r-b636875ee28f
+ggplot(nobel, aes(x = awardYear, y = gender, col = gender)) +
+  geom_point(position = "jitter") + facet_grid(category ~ .) + 
+  labs(title = "Distribution of Nobel Prizes over time by category") +
+  xlab("Assigned Prize Year") +
+  ylab("Gender / Type") +
+  theme(axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.title = element_text(size = 15, face = "bold"))
+
+# NA - it is organization probably
