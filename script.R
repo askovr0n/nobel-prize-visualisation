@@ -3,6 +3,7 @@ library(tidyr)
 library(lubridate)
 library(ggplot2)
 library(ggrepel)
+library(plyr)
 
 #install.packages('showtext', dependencies = TRUE)
 library(showtext)
@@ -40,50 +41,29 @@ theme_set(theme_minimal(#base_size = 10
 
 nobelgold = "#d1c700" # gold
 
-male =  "#97e5ef" # blue
-female = "#efa8e4" # pink
-
-ind = '#ffa5b0' # smoke
-org = '#45046a' # purple
-
-rec = '#b9cced' # light blue-violet
-dec = '#f64b3c' # red
-res = '#434e52' # black
-
-phy = "#fe91ca" # light pink
-che = "#7fdbda" # light cyan
-med = "#ade498" # light green
-pea = "#ede682" # light yellow
-lit = "#abc2e8" # light blue
-ecn = "#febf63" # light orange
-
-## palette ----
-
-# gender
-gen_pal <- c(male, female) 
-
-# individual - organization
-org_pal <- c(ind, org) 
-
-# male - female - org
-mfo_pal <- c(male, female, org)
-names(mfo_pal) <- c('Male', 'Female', 'Organization')
-
-# received - declined - restricted
-status_pal <- c(rec, dec, res)
-names(status_pal) <- c('Received', 'Declined', 'Restricted')
-
-# category palette
-cat_pal <- c(phy, che ,med ,pea ,lit ,ecn)
-names(cat_pal) <- c('Physics', 'Chemistry', 'Physiology or Medicine',
-                    'Peace', 'Literature', 'Economic Sciences')
-
-# share palette
-share_pal <- c("#beeb9f", "#00a388", "#f96b85")
-
-# per 20 years
-per_20_pal = c('#ffbd39', '#f76b8a', '#ff8264', '#17b978', '#005691', '#1b262c')
-
+# male =  "#97e5ef" # blue
+# female = "#efa8e4" # pink
+# 
+# ind = '#ffa5b0' # smoke
+# org = '#45046a' # purple
+# 
+# rec = '#b9cced' # light blue-violet
+# dec = '#f64b3c' # red
+# res = '#434e52' # black
+# 
+# phy = "#fe91ca" # light pink
+# che = "#7fdbda" # light cyan
+# med = "#ade498" # light green
+# pea = "#ede682" # light yellow
+# lit = "#abc2e8" # light blue
+# ecn = "#febf63" # light orange
+# 
+# ## palette ----
+# 
+# # category palette
+# cat_pal <- c(phy, che ,med ,pea ,lit ,ecn)
+# names(cat_pal) <- c('Physics', 'Chemistry', 'Physiology or Medicine',
+#                     'Peace', 'Literature', 'Economic Sciences')
 
 
 # Pre processing ----
@@ -99,12 +79,6 @@ nobel_data$category = factor(nobel_data$category, levels = c('Physics', 'Chemist
 nobel_data$prizeStatus <- str_to_title(nobel_data$prizeStatus)
 nobel_data$prizeStatus <- factor(nobel_data$prizeStatus, levels = c('Received', 'Declined', 'Restricted'))
 
-nobel_data$gender <- str_to_title(nobel_data$gender)
-nobel_data$gender <- factor(nobel_data$gender, levels = c('Male', 'Female'))
-
-nobel_data$gen_org <- if_else(nobel_data$gender == 'Male', "Male", "Female", "Organization")
-nobel_data$gen_org <- factor(nobel_data$gen_org, levels = c("Male", "Female", "Organization"))
-
 nobel_data <- nobel_data %>%
   mutate(awardDate = as.Date(ISOdate(awardYear, 10, 01)), # approximating 
          age_days = ifelse(birth_date == "", "unnknown", awardDate - as.Date(birth_date)),
@@ -119,21 +93,15 @@ nobel_data <- nobel_data %>%
 
 age_data <- nobel_data %>% 
   drop_na(age_years) %>%
-  select(awardYear, category, gender, age_days, age_years, name)
+  select(awardYear, category, age_days, age_years, name)
 
-age_stats <- nobel_data %>%
-  drop_na(age_years) %>%
-  group_by(category) %>%
-  summarize(mean_age = mean(age_years), 
-            median_age = median(age_years))
-
-
-ggplot(age_data, aes(x = awardYear, y = age_years)) +
+ggplot(nobel_data %>% drop_na(age_years),
+       aes(x = awardYear, y = age_years)) +
   geom_point(aes(colour = ifelse(age_years <= 30 | age_years >= 90, "red", "#d1c700")),
              size = 5,
              alpha = 0.5) + 
-  geom_smooth(color = "#3d3d3d",
-              alpha=0.3) +
+  geom_smooth(formula = y ~ x, method = 'loess', se = FALSE, size = 2, color = "#3d3d3d",
+              alpha=0.1) +
   scale_color_manual(name = "Age",
                      values = c(nobelgold, "red"),
                      labels = c("between 30 and 90", "less than 30 or more than 90")) +
@@ -152,16 +120,57 @@ ggsave("plots/plot1.png", dpi=300)
   
 # 2nd plot (Age of Nobel Laureates over the years) - Szymon ----
 
-ggplot(age_data, aes(x = awardYear, y = age_years, col = category)) +
-  geom_point(size = 4, alpha= 0.5) +
+median_age <- ddply(age_data, .(category), summarise, median = median(age_years))
+
+ggplot(transform(age_data, category=factor(category, levels = c("Chemistry", "Economic Sciences", "Literature", "Peace", "Physics", "Physiology or Medicine"))), aes(x = awardYear, y = age_years, col = category)) +
+  geom_point(size = 4, alpha= 0.7) +
   geom_smooth(formula = y ~ x, method = 'loess', se = FALSE, size = 2) +
-  labs(title = 'Age of Nobel Laureates over the years', x = '', y = '') +
+  labs(title = 'Age of Nobel Laureates over the years', x = 'Year', y = 'Age') +
   facet_wrap(vars(category), nrow = 2) + 
-  theme(legend.position = "none", panel.spacing.x = unit(2, "lines")) + 
-  scale_colour_manual(values = cat_pal)
+  theme(legend.position = "none") + 
+  scale_colour_brewer(palette="Paired") +
+  geom_hline(aes(yintercept = median, colour = category), data = median_age, linetype = "dashed", size = 1)
 ggsave("plots/plot2.png", dpi=150)
 
 
-# 3rd plot - Artur ----
+# 3rd plot - Szymon ----
 
-# 4rd plot - Artur ----
+country_count <- nobel_data %>%
+  drop_na(birth_countryNow) %>%
+  select(birth_countryNow) %>%
+  group_by(birth_countryNow) %>%
+  mutate(birth_countryNow = str_replace(birth_countryNow, 'United Kingdom', 'UK'), 
+         birth_countryNow = str_replace(birth_countryNow, 'Scotland', 'UK'),            
+         birth_countryNow = str_replace(birth_countryNow, 'Northern Ireland', 'Ireland'), 
+         birth_countryNow = str_replace(birth_countryNow, 'the Netherlands', 'Netherlands')) %>%
+  dplyr::summarise(n = n()) %>%
+  mutate(m = case_when(n > 100  ~ "100 +",
+                       n < 100 & n >= 50 ~ "99 - 50",
+                       n < 50 & n >= 20 ~ "49 - 20",
+                       n < 20 & n >= 10 ~ "19 - 10",
+                       n < 10  ~ "< 10")) %>%
+  mutate(m = factor(m, levels = c("< 10", "19 - 10", "49 - 20", "99 - 50", "100 +")))
+
+map_data <- country_count %>% 
+  full_join(map_data("world"), by = c('birth_countryNow' = 'region')) 
+
+ggplot(map_data, aes(x = long, y = lat, group = group, fill = m)) +
+  geom_polygon(colour = "#616161") + 
+  labs(title = 'Number of laureates born in a given country', x = '', y = '', fill = 'Number') +
+  scale_fill_brewer(palette="OrRd", na.value = 'lightgray') +
+  guides(fill = guide_legend(reverse = TRUE))+
+  theme(legend.position=c(0.12, 0.37),
+        legend.justification = "top",
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()
+  )
+ggsave("plots/plot3.png", dpi=150)
+
+
+# 4th plot - Artur ----
+
+# 5th plot - Artur ----
