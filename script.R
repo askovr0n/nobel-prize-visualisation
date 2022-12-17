@@ -7,7 +7,7 @@ library(plyr)
 
 #install.packages('showtext', dependencies = TRUE)
 library(showtext)
-font_add_google("Quicksand", "Quicksand") # https://fonts.google.com/
+font_add_google("IBM Plex Serif", "IBM Plex Serif") # https://fonts.google.com/
 #font_families()
 showtext_auto()
 
@@ -27,10 +27,13 @@ nobel_data <- read.csv('data/nobel_data.csv')
 
 theme_set(theme_minimal(#base_size = 10
   ) + 
-            theme(plot.title = element_text(face="bold", family="Quicksand", size = 50),
-                  text = element_text(family="Quicksand", size = 20),
+            theme(plot.title = element_text(face="bold", family="IBM Plex Serif", size = 50),
+                  text = element_text(family="IBM Plex Serif", size = 20),
+                  legend.title=element_text(size=20, face="bold"),
                   axis.text=element_text(size=20),
-                  axis.title=element_text(size=25, face="bold"),
+                  legend.text=element_text(size=20),
+                  axis.title=element_text(size=20, face="bold"),
+                  strip.text.x = element_text(size = 25),
                   legend.direction = "vertical",
                   legend.box = "vertical",
             )
@@ -105,17 +108,17 @@ ggplot(nobel_data %>% drop_na(age_years),
   scale_color_manual(name = "Age",
                      values = c(nobelgold, "red"),
                      labels = c("between 30 and 90", "less than 30 or more than 90")) +
-  labs(title = 'Age of laureates at the time of receiving the Nobel Prize', 
+  labs(title = 'Age of Nobel laureates', 
        x = 'Year', 
        y = 'Age', 
        col='') +
   geom_text_repel(aes(label = ifelse(age_years <= 30 | age_years >= 90, as.character(name), "")),
                   size = 10,
-                  family = "Quicksand") +
+                  family = "IBM Plex Serif") +
   theme(legend.position = "bottom",
         legend.direction = "horizontal",
         legend.box = "horizontal")
-ggsave("plots/plot1.png", dpi=300)
+ggsave("plots/plot1.png", width = 16, height = 9, dpi=150, bg='white')
   
   
 # 2nd plot (Age of Nobel Laureates over the years) - Szymon ----
@@ -130,7 +133,7 @@ ggplot(transform(age_data, category=factor(category, levels = c("Chemistry", "Ec
   theme(legend.position = "none") + 
   scale_colour_brewer(palette="Paired") +
   geom_hline(aes(yintercept = median, colour = category), data = median_age, linetype = "dashed", size = 1)
-ggsave("plots/plot2.png", dpi=150)
+ggsave("plots/plot2.png", width = 16, height = 9, dpi=150, bg='white')
 
 
 # 3rd plot - Szymon ----
@@ -168,9 +171,10 @@ ggplot(map_data, aes(x = long, y = lat, group = group, fill = m)) +
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank()
   )
-ggsave("plots/plot3.png", dpi=150)
+ggsave("plots/plot3.png", width = 16, height = 9, dpi=150, bg='white')
 
 
 # 4th plot - Artur ----
 
 # 5th plot - Artur ----
+
