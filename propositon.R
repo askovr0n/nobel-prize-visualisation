@@ -94,7 +94,21 @@ ggplot(data = nobel_no_category_gender, aes(x = category, y = number, fill = fac
 # 3. Nobel prize distribution by year and category - usage of gg extensions
 
 library(ggrepel)
-nobel$awardYear_cut <- cut(nobel$awardYear, 10, dig.lab=4)
+
+nobel$awardYear_cut <- nobel$awardYear_cut <- cut(nobel$awardDate, 
+                                                  breaks="10 years",
+                                                  labels = c("1901-1910",
+                                                             "1911-1920",
+                                                             "1921-1930",
+                                                             "1931-1940",
+                                                             "1941-1950",
+                                                             "1951-1960",
+                                                             "1961-1970",
+                                                             "1971-1980",
+                                                             "1981-1990",
+                                                             "1991-2000",
+                                                             "2001-2010",
+                                                             "2011-2019"))
 unique_categories <- unique(nobel$awardYear_cut)
 
 nobel_no_year_category <- nobel %>% 
