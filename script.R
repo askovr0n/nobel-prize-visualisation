@@ -2,8 +2,11 @@ library(tidyverse)
 library(tidyr)
 library(lubridate)
 library(ggplot2)
+library(forcats)
 library(ggrepel)
 library(plyr)
+library(dplyr)
+library(tidytext)
 
 #install.packages('showtext', dependencies = TRUE)
 library(showtext)
@@ -80,7 +83,15 @@ nobel_data$category = factor(nobel_data$category, levels = c('Physics', 'Chemist
                                              'Peace', 'Literature', 'Economic Sciences'))
 
 nobel_data$prizeStatus <- str_to_title(nobel_data$prizeStatus)
+
+nobel_data$gender <- str_to_title(nobel_data$gender)
+nobel_data$gender <- factor(nobel_data$gender, levels = c('Male', 'Female'))
+
 nobel_data$prizeStatus <- factor(nobel_data$prizeStatus, levels = c('Received', 'Declined', 'Restricted'))
+
+
+nobel_data$gen_org <- if_else(nobel_data$gender == 'Male', "Male", "Female", "Organization")
+nobel_data$gen_org <- factor(nobel_data$gen_org, levels = c("Male", "Female", "Organization"))
 
 nobel_data <- nobel_data %>%
   mutate(awardDate = as.Date(ISOdate(awardYear, 10, 01)), # approximating 
@@ -130,9 +141,14 @@ ggplot(transform(age_data, category=factor(category, levels = c("Chemistry", "Ec
   geom_smooth(formula = y ~ x, method = 'loess', se = FALSE, size = 2) +
   labs(title = 'Age of Nobel Laureates over the years', x = 'Year', y = 'Age') +
   facet_wrap(vars(category), nrow = 2) + 
-  theme(legend.position = "none") + 
+  theme(legend.position = "none",
+        panel.spacing.x = unit(1.5, "lines")) + 
   scale_colour_brewer(palette="Paired") +
-  geom_hline(aes(yintercept = median, colour = category), data = median_age, linetype = "dashed", size = 1)
+  geom_hline(aes(yintercept = median, colour = category), data = median_age, linetype = "dashed", size = 1) +
+  geom_text_repel(aes(label=ifelse(age_years<30 | age_years > 85, as.character(nobel_data$knownName), "")),
+                  size=5,
+                  family = "IBM Plex Serif",
+                  colour = "black")
 ggsave("plots/plot2.png", width = 16, height = 9, dpi=150, bg='white')
 
 
@@ -174,7 +190,205 @@ ggplot(map_data, aes(x = long, y = lat, group = group, fill = m)) +
 ggsave("plots/plot3.png", width = 16, height = 9, dpi=150, bg='white')
 
 
-# 4th plot - Artur ----
+# 4th plot - Award category distribution - Artur ----
+
+nobel_gender_perc <- 
+  nobel_data %>% 
+  mutate(category=factor(category, levels = c("Chemistry", "Economic Sciences", "Literature", "Peace", "Physics", "Physiology or Medicine"))) %>% 
+  group_by(category) %>% 
+  tally() %>% 
+  dplyr::rename(count = n) %>% 
+  mutate(perc_n = 100*round(count/sum(count), 3)) %>% 
+  unnest(cols = c()) %>% 
+  arrange(desc(category)) %>%
+  mutate(lab.ypos = cumsum(perc_n) - 0.5*perc_n)
+
+# Make the plot
+#mycols <- c("#0073C2FF", "#EFC000FF", "#868686FF", "#CD534CFF", "lightgoldenrod4", "hotpink1")
+
+ggplot(nobel_gender_perc, aes(x = 2, y = perc_n, fill = category)) +
+  geom_bar(stat = "identity", color = "white") +
+  coord_polar(theta = "y", start = 0)+
+  geom_text(aes(y = lab.ypos, label = paste0(perc_n, "%")), color = "black", size = 10, family = "IBM Plex Serif")+
+  scale_fill_brewer(palette="Paired") +
+  labs(x = '', y = '', title = "Award category distribution", fill = 'Category') + 
+  #scale_fill_manual(values = mycols) +
+  #theme_void()+
+  theme(legend.position=c(0.12, 0.25),
+        legend.justification = "top",
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()
+  ) + 
+  xlim(0.5, 2.5)
+ggsave("plots/plot4.png", width = 16, height = 9, dpi=150, bg='white')
+
 
 # 5th plot - Artur ----
 
+nobel_no_category_gender <- nobel_data %>%
+  filter(!gender == "") %>% 
+  group_by(category, gender) %>% 
+  dplyr::summarise(number = length(category)) %>% 
+  unnest(cols = c())
+
+ggplot(data = nobel_no_category_gender, aes(x = reorder(category, -number), y = number, fill = factor(gender))) +
+  geom_bar(na.rm = TRUE, position = "stack", width = 0.5, stat = "identity") +
+  ggtitle('Gender and age in the sample') +
+  xlab('Category') +
+  ylab('Population') +
+  labs(fill = 'Gender') +
+  #theme_minimal() +
+  scale_fill_manual(values = c('grey78', 'khaki')) +
+  geom_label(aes(y = number, label = number), fill = 'white', position = "identity",
+             vjust = 0.5, color = "black", size = 5, family = "IBM Plex Serif") +
+  scale_x_discrete(labels = function(x) 
+    stringr::str_wrap(x, width = 15)) +
+  theme(legend.position="bottom",
+        legend.direction="horizontal"
+  ) 
+ggsave("plots/plot5.png", width = 16, height = 9, dpi=150, bg='white')
+
+
+# 6th plot - Artur ----
+
+nobel_data$awardYear_cut <- nobel_data$awardYear_cut <- cut(x=nobel_data$awardDate, 
+                                                            breaks="10 years",
+                                                            labels = c("1901-1910",
+                                                                       "1911-1920",
+                                                                       "1921-1930",
+                                                                       "1931-1940",
+                                                                       "1941-1950",
+                                                                       "1951-1960",
+                                                                       "1961-1970",
+                                                                       "1971-1980",
+                                                                       "1981-1990",
+                                                                       "1991-2000",
+                                                                       "2001-2010",
+                                                                       "2011-2019"))
+unique_categories <- unique(nobel_data$awardYear_cut)
+
+nobel_no_year_category <- nobel_data %>% 
+  group_by(awardYear_cut, category) %>% 
+  dplyr::summarise(number = length(awardYear_cut)) %>% 
+  mutate(label = if_else(awardYear_cut == levels(nobel_data$awardYear_cut)[length(unique_categories <- unique(nobel_data$awardYear_cut))],
+                         as.character(category),
+                         NA_character_))
+
+nobel_no_year_category %>%
+  ggplot(aes(x = awardYear_cut, y = number, group = category, colour = category)) + 
+  geom_line(size = 2) +
+  theme(axis.text.x = element_text(angle=45, hjust=1, size = 25)) +
+  geom_label_repel(aes(label = label,
+                       nudge_x = 2019,
+                       na.rm = TRUE),
+                   size=8,
+                   family = "IBM Plex Serif") +
+  labs(x = 'Decades', y = 'Number of Nobel Prizes', title = "Nobel prizes based on categories", color = 'Category') +
+  scale_color_brewer(palette="Paired") +
+  theme(legend.position = "none")
+ggsave("plots/plot6.png", width = 16, height = 9, dpi=150, bg='white')
+
+
+# 7th plot - Artur - Nobel prize distribution by age and category - usage of tables from ggplot - ----
+
+nobel.agg <- nobel_data %>%
+  dplyr::mutate(age_years_cut = cut(age_years, 
+                             breaks = 4,
+                             labels = c('17-37', '38-57', '58-77', '78-97')),
+         age_years_cut = forcats::fct_explicit_na(age_years_cut, paste0('Unknown -\n organization'))) %>% 
+  dplyr::count(age_years_cut, category)
+
+ggplot(nobel.agg, aes(x = age_years_cut, y = category)) + # nowa baza danych
+  geom_tile(aes(fill = n), color = 'black', show.legend = F) +
+  #theme_minimal() + 
+  geom_text(aes(label = n), size = 8, fontface = 'bold', color = 'black', family = "IBM Plex Serif") +
+  labs(title = 'Dispersion of Nobel Prizes',
+       x = "Age",
+       y = "Category") +
+  scale_fill_gradient(low = 'green3', high = 'orange')
+ggsave("plots/plot7.png", width = 16, height = 9, dpi=150, bg='white')
+
+
+# 8th plot - Artur - number of laureates share the award ----
+
+# nobel_prize_share <- nobel_data %>%  
+#   group_by(category, awardYear) %>% 
+#   dplyr::summarise(number = n()) %>% 
+#   ungroup 
+# 
+# ggplot(nobel_prize_share, aes(x = awardYear, y = category, col = factor(number))) +
+#   geom_point(size = 2, fill = 'black') + 
+#   scale_x_continuous(limits = c(1899, 2021), breaks = seq(1900, 2020, 8), expand = c(0, 0)) +
+#   labs(title='No. of laureates shared the award', x = '', y='') +
+#   theme(legend.title = element_blank(), legend.position='top', legend.justification = "left")
+
+
+# 9th plot - Artur - Birth continent ----
+
+nobel_prize_share_by_continent <- nobel_data %>%
+  filter(birth_continent %in% c("Europe", "North America", "Asia", "Africa", "Oceania", "South America")) %>% 
+  drop_na(birth_continent) %>%
+  group_by(birth_continent) %>%
+  dplyr::summarise(number = n())
+
+ggplot(nobel_prize_share_by_continent, aes(reorder(birth_continent, number), number, fill = birth_continent)) +
+  geom_col() +
+  labs(title = 'Birth Continent', x = '', y = 'Number of Nobel laureates') +  
+  geom_text(aes(label = number), hjust = -0.3, colour = "#555555", size = 6, fontface = "bold", family = "IBM Plex Serif") +
+  scale_y_continuous(limits = c(0, 520)) +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set2") +
+  theme(legend.position = 'none',
+        panel.spacing.x = unit(1.5, "lines"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+ggsave("plots/plot9.png", width = 16, height = 9, dpi=150, bg='white')
+
+
+# 10th plot - Artur - Birth continent ----
+
+nobel_data$motivation<-as.character(nobel_data$motivation)
+
+motivation_words <- nobel_data %>%
+  select(category, motivation) %>%
+  drop_na(motivation) %>%
+  unnest_tokens(bigram, motivation, token = "ngrams", n = 2) %>%
+  separate(bigram, c("word1", "word2"), sep = " ")
+
+bigram_filtr_and_unite <- motivation_words %>% 
+  filter(!word1 %in% stop_words$word) %>%
+  filter(!word2 %in% stop_words$word) %>% 
+  filter(word1 != word2) %>%
+  unite(bigram, word1, word2, sep = " ")
+
+bigrams_to_plot <- bigram_filtr_and_unite %>% 
+  group_by(category, bigram) %>%
+  dplyr::summarize(n = n()) %>% 
+  top_n(5, n) %>%
+  arrange(category, desc(n)) %>% 
+  dplyr::mutate(row_number_in_group = row_number()) %>%  
+  filter(row_number_in_group %in% seq(1,5)) %>% 
+  ungroup %>%
+  dplyr::mutate(word = reorder_within(bigram, n, category)) 
+
+ggplot(transform(bigrams_to_plot, category=factor(category, levels = c("Chemistry", "Economic Sciences", "Literature", "Peace", "Physics", "Physiology or Medicine"))), aes(x= reorder(word, n), y = n, fill = category)) +
+  geom_col() +
+  geom_text(aes(label = n), hjust = 1.2, colour = "white", size = 7, fontface = 'bold', family = "IBM Plex Serif") +
+  labs(title = 'Most 5 frequent words in each category', x = '', y = '', fill = '') +
+  coord_flip() + 
+  theme(legend.position = 'none',
+        panel.spacing.x = unit(1.5, "lines"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+  scale_x_reordered() +
+  facet_wrap(vars(category), scales = 'free') +
+  scale_fill_brewer(palette="Paired")
+ggsave("plots/plot10.png", width = 16, height = 9, dpi=150, bg='white')
