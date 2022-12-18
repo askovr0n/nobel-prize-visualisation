@@ -11,6 +11,8 @@ library(tidyr)
 
 nobel <- read_csv('complete.csv')
 
+nobel_data <- read_csv('complete.csv')
+
 # Preprocessing
 
 nobel <- mutate(nobel, birth_date = ifelse(birth_date == "1943-00-00", "1943-11-07", birth_date))
@@ -239,4 +241,58 @@ ggplot(nobel_prize_share_by_continent, aes(reorder(birth_continent, number), num
   scale_fill_brewer(palette = "Set2") +
   theme(legend.position = "none")
 
-# Plot 8: Moze wykres w jakims przyblizeniu tak jak bylo na zajeciach?
+# Plot 8: Bigrams - motivation in each category?
+library(tidytext)
+
+nobel$motivation<-as.character(nobel$motivation)
+motivation_bigrams <- nobel %>%
+  unnest_tokens(bigram, motivation, token = "ngrams", n = 2)
+
+bigrams_separated <- motivation_bigrams %>%
+  separate(bigram, c("word1", "word2"), sep = " ")
+
+bigrams_filtered <- bigrams_separated %>%
+  filter(!word1 %in% stop_words$word) %>%
+  filter(!word2 %in% stop_words$word) 
+
+bigram_united <- bigrams_filtered %>%
+  filter(word1 != word2) %>%
+  unite(bigram, word1, word2, sep = " ")
+
+bigram_counts <- bigram_united %>% 
+  count(bigram, sort = TRUE)
+head(bigram_counts) 
+
+
+# ------
+  
+motivation_words <- nobel_data %>%
+  select(category, motivation) %>%
+  drop_na(motivation) %>%
+  unnest_tokens(bigram, motivation, token = "ngrams", n = 2) %>%
+  separate(bigram, c("word1", "word2"), sep = " ")
+  
+bigram_filtr_and_unite <- motivation_words %>% 
+  filter(!word1 %in% stop_words$word) %>%
+  filter(!word2 %in% stop_words$word) %>% 
+  filter(word1 != word2) %>%
+  unite(bigram, word1, word2, sep = " ")
+
+bigrams_to_plot <- bigram_filtr_and_unite %>% 
+  group_by(category, bigram) %>%
+  summarize(n = n()) %>% 
+  top_n(5, n) %>%
+  arrange(category, desc(n)) %>% 
+  mutate(row_number_in_group = row_number()) %>%  
+  filter(row_number_in_group %in% seq(1,5)) %>% 
+  ungroup %>%
+  mutate(word = reorder_within(bigram, n, category)) 
+
+ggplot(bigrams_to_plot, aes(x= reorder(word, n), y = n, fill = category)) +
+  geom_col() +
+  geom_text(aes(label = n), hjust = 1.2, colour = "white", size = 5, fontface = 'bold') +
+  labs(title = 'Most frequent 10 words in each category', x = '', y = '', fill = '') +
+  coord_flip() + 
+  theme(legend.position = 'none', panel.spacing.x = unit(1.5, "lines")) +
+  scale_x_reordered() +
+  facet_wrap(~category, scales = 'free')
