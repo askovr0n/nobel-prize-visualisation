@@ -112,7 +112,7 @@ age_data <- nobel_data %>%
 ggplot(nobel_data %>% drop_na(age_years),
        aes(x = awardYear, y = age_years)) +
   geom_point(aes(colour = ifelse(age_years <= 30 | age_years >= 90, "red", "#d1c700")),
-             size = 5,
+             size = 4,
              alpha = 0.5) + 
   geom_smooth(formula = y ~ x, method = 'loess', se = FALSE, size = 2, color = "#3d3d3d",
               alpha=0.1) +
@@ -129,7 +129,7 @@ ggplot(nobel_data %>% drop_na(age_years),
   theme(legend.position = "bottom",
         legend.direction = "horizontal",
         legend.box = "horizontal")
-ggsave("plots/plot1.png", width = 16, height = 9, dpi=150, bg='white')
+ggsave("plots/plot1.png", width = 12, height = 9, dpi=150, bg='white')
   
   
 # 2nd plot (Age of Nobel Laureates over the years) - Szymon ----
@@ -149,7 +149,7 @@ ggplot(transform(age_data, category=factor(category, levels = c("Chemistry", "Ec
                   size=5,
                   family = "IBM Plex Serif",
                   colour = "black")
-ggsave("plots/plot2.png", width = 16, height = 9, dpi=150, bg='white')
+ggsave("plots/plot2.png", width = 12, height = 9, dpi=150, bg='white')
 
 
 # 3rd plot - Szymon ----
@@ -187,7 +187,7 @@ ggplot(map_data, aes(x = long, y = lat, group = group, fill = m)) +
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank()
   )
-ggsave("plots/plot3.png", width = 16, height = 9, dpi=150, bg='white')
+ggsave("plots/plot3.png", width = 12, height = 9, dpi=150, bg='white')
 
 
 # 4th plot - Award category distribution - Artur ----
@@ -224,7 +224,7 @@ ggplot(nobel_gender_perc, aes(x = 2, y = perc_n, fill = category)) +
         axis.ticks.y=element_blank()
   ) + 
   xlim(0.5, 2.5)
-ggsave("plots/plot4.png", width = 16, height = 9, dpi=150, bg='white')
+ggsave("plots/plot4.png", width = 12, height = 9, dpi=150, bg='white')
 
 
 # 5th plot - Artur ----
@@ -250,7 +250,7 @@ ggplot(data = nobel_no_category_gender, aes(x = reorder(category, -number), y = 
   theme(legend.position="bottom",
         legend.direction="horizontal"
   ) 
-ggsave("plots/plot5.png", width = 16, height = 9, dpi=150, bg='white')
+ggsave("plots/plot5.png", width = 12, height = 9, dpi=150, bg='white')
 
 
 # 6th plot - Artur ----
@@ -290,7 +290,7 @@ nobel_no_year_category %>%
   labs(x = 'Decades', y = 'Number of Nobel Prizes', title = "Nobel prizes based on categories", color = 'Category') +
   scale_color_brewer(palette="Paired") +
   theme(legend.position = "none")
-ggsave("plots/plot6.png", width = 16, height = 9, dpi=150, bg='white')
+ggsave("plots/plot6.png", width = 12, height = 9, dpi=150, bg='white')
 
 
 # 7th plot - Artur - Nobel prize distribution by age and category - usage of tables from ggplot - ----
@@ -310,7 +310,7 @@ ggplot(nobel.agg, aes(x = age_years_cut, y = category)) + # nowa baza danych
        x = "Age",
        y = "Category") +
   scale_fill_gradient(low = 'green3', high = 'orange')
-ggsave("plots/plot7.png", width = 16, height = 9, dpi=150, bg='white')
+ggsave("plots/plot7.png", width = 12, height = 9, dpi=150, bg='white')
 
 
 # 8th plot - Artur - number of laureates share the award ----
@@ -348,7 +348,7 @@ ggplot(nobel_prize_share_by_continent, aes(reorder(birth_continent, number), num
         panel.grid.minor = element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank())
-ggsave("plots/plot9.png", width = 16, height = 9, dpi=150, bg='white')
+ggsave("plots/plot9.png", width = 12, height = 9, dpi=150, bg='white')
 
 
 # 10th plot - Artur - Birth continent ----
@@ -387,8 +387,9 @@ ggplot(transform(bigrams_to_plot, category=factor(category, levels = c("Chemistr
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         axis.text.x=element_blank(),
-        axis.ticks.x=element_blank()) +
+        axis.ticks.x=element_blank(),
+        strip.text.x = element_text(size = 15)) +
   scale_x_reordered() +
   facet_wrap(vars(category), scales = 'free') +
   scale_fill_brewer(palette="Paired")
-ggsave("plots/plot10.png", width = 16, height = 9, dpi=150, bg='white')
+ggsave("plots/plot10.png", width = 12, height = 9, dpi=150, bg='white')
