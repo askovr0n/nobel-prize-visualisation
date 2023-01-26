@@ -3,13 +3,14 @@ title: "Nobel Prize Data Analysis"
 subtitle: "Advanced Visualization in R - Project presentation"
 author: "Szymon Socha, Artur Skowroński"
 date: "`r Sys.Date()`"
-output: beamer_presentation
+output: 
+  beamer_presentation:
+    theme: "boxes"
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 ```
-
 
 # Data
 ```{r include=FALSE}
@@ -40,11 +41,7 @@ nobel_data <- read.csv('../data/nobel_data.csv')
 
 ## ggplot custom theme ----
 
-# nobel_price_custom_theme <- theme_minimal(base_size = 10) + 
-#   theme(plot.title = element_text(face="bold", family="Quicksand"),
-#         text = element_text(family="Quicksand"))
-
-theme_set(theme_minimal(#base_size = 10
+theme_set(theme_minimal(
   ) + 
             theme(plot.title = element_text(face="bold", family="IBM Plex Serif", size = 25),
                   text = element_text(family="IBM Plex Serif", size = 13),
@@ -60,33 +57,7 @@ theme_set(theme_minimal(#base_size = 10
 )
 
 
-## color ----
-
 nobelgold = "#d1c700" # gold
-
-# male =  "#97e5ef" # blue
-# female = "#efa8e4" # pink
-# 
-# ind = '#ffa5b0' # smoke
-# org = '#45046a' # purple
-# 
-# rec = '#b9cced' # light blue-violet
-# dec = '#f64b3c' # red
-# res = '#434e52' # black
-# 
-# phy = "#fe91ca" # light pink
-# che = "#7fdbda" # light cyan
-# med = "#ade498" # light green
-# pea = "#ede682" # light yellow
-# lit = "#abc2e8" # light blue
-# ecn = "#febf63" # light orange
-# 
-# ## palette ----
-# 
-# # category palette
-# cat_pal <- c(phy, che ,med ,pea ,lit ,ecn)
-# names(cat_pal) <- c('Physics', 'Chemistry', 'Physiology or Medicine',
-#                     'Peace', 'Literature', 'Economic Sciences')
 
 
 # Pre processing ----
@@ -111,7 +82,7 @@ nobel_data$gen_org <- if_else(nobel_data$gender == 'Male', "Male", "Female", "Or
 nobel_data$gen_org <- factor(nobel_data$gen_org, levels = c("Male", "Female", "Organization"))
 
 nobel_data <- nobel_data %>%
-  mutate(awardDate = as.Date(ISOdate(awardYear, 10, 01)), # approximating 
+  mutate(awardDate = as.Date(ISOdate(awardYear, 10, 01)),
          age_days = ifelse(birth_date == "", "unnknown", awardDate - as.Date(birth_date)),
          age_years = round(interval(as.Date(birth_date), awardDate) / years(1)), 
          life_span_days = as.Date(death_date) - as.Date(birth_date), 
@@ -121,48 +92,16 @@ nobel_data <- nobel_data %>%
 
 ## Dataset description
 
-The dataset comes from \href{https://www.kaggle.com/datasets/imdevskp/nobel-prize}{\beamergotobutton{Kaggle}} and contains information on each person or organisation that has received a Nobel Prize between 1901 and 2019.
+The dataset comes from \href{https://www.nobelprize.org/about/developer-zone-external-resources-and-examples/}{\beamergotobutton{Swedish Data Portal}} and contains information on each person or organisation that has received a Nobel Prize between 1901 and 2019.
 
-In the following work, we will graphically depict, among other things, what age characterises the Nobel Prize award winners by field, which country the Nobel laureates came from, and which research topics dominated each category.
+In the following work, we will graphically present, among other things, what age characterizes the Nobel Prize award winners by field, which country the Nobel laureates came from and which research topics dominated in each category.
 
 # Visualization
 
-## Characteristics of Nobel Prize winners
+## Category analysis
 [//]: <> (\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../plots/plot1.png})
 
 ```{r plot1, message=FALSE, warning=FALSE}
-
-nobel_no_category_gender <- nobel_data %>%
-  filter(!gender == "") %>% 
-  group_by(category, gender) %>% 
-  dplyr::summarise(number = length(category)) %>% 
-  unnest(cols = c())
-
-ggplot(data = nobel_no_category_gender, aes(x = reorder(category, -number), y = number, fill = factor(gender))) +
-  geom_bar(na.rm = TRUE, position = "stack", width = 0.5, stat = "identity") +
-  ggtitle('Gender and age in the sample') +
-  xlab('Category') +
-  ylab('Population') +
-  labs(fill = 'Gender') +
-  scale_fill_manual(values = c('grey78', 'khaki')) +
-  geom_label(aes(y = number, label = number), fill = 'white', position = "identity",
-             vjust = 0.5, color = "black", size = 3, family = "IBM Plex Serif") +
-  scale_x_discrete(labels = function(x) 
-    stringr::str_wrap(x, width = 15)) +
-  theme(legend.position="bottom",
-        legend.direction="horizontal",
-        panel.grid.minor.y = element_blank(),
-        panel.grid.minor.x = element_blank(),
-        panel.grid.major.x = element_blank()
-  ) 
-
-```
-
-## Characteristics of Nobel Prize winners
-[//]: <> (\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../plots/plot2.png})
-
-```{r plot2, message=FALSE, warning=FALSE}
-
 nobel_gender_perc <- 
   nobel_data %>% 
   mutate(category=factor(category, levels = c("Chemistry", "Economic Sciences", "Literature", "Peace", "Physics", "Physiology or Medicine"))) %>% 
@@ -180,8 +119,6 @@ ggplot(nobel_gender_perc, aes(x = 2, y = perc_n, fill = category)) +
   geom_text(aes(y = lab.ypos, label = paste0(perc_n, "%")), color = "black", size = 7, family = "IBM Plex Serif")+
   scale_fill_brewer(palette="Paired") +
   labs(x = '', y = '', title = "Award category distribution", fill = 'Category') + 
-  #scale_fill_manual(values = mycols) +
-  #theme_void()+
   theme(legend.position=c(0.12, 0.25),
         legend.justification = "top",
         panel.grid.major = element_blank(),
@@ -194,11 +131,44 @@ ggplot(nobel_gender_perc, aes(x = 2, y = perc_n, fill = category)) +
   xlim(0.5, 2.5)
 ```
 
-## Distribution of Nobel prizes by years and age
+## Category analysis
+[//]: <> (\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../plots/plot2.png})
+
+```{r plot2, message=FALSE, warning=FALSE}
+nobel_no_category_gender <- nobel_data %>%
+  filter(!gender == "") %>% 
+  group_by(category, gender) %>% 
+  dplyr::summarise(number = length(category)) %>% 
+  unnest(cols = c()) %>%
+  dplyr::group_by(category) %>%
+  dplyr::mutate(summed = sum(number)) %>% 
+  mutate(summed = ifelse(gender == "Male", summed, number))
+
+ggplot(data = nobel_no_category_gender, aes(x = reorder(category, -number), y = number, fill = reorder(gender, -number))) +
+  geom_bar(na.rm = TRUE, position = "stack", width = 0.5, stat = "identity") +
+  ggtitle('Number of rewards per category and gender') +
+  xlab('Category') +
+  ylab('Number') +
+  labs(fill = 'Gender') +
+  scale_fill_manual(values = c('grey78', nobelgold)) +
+  geom_label(aes(y = summed, label =number), fill = 'white', position = "identity",
+             vjust = .5, color = "black", size = 3, family = "IBM Plex Serif") +
+  scale_x_discrete(labels = function(x) 
+    stringr::str_wrap(x, width = 15)) +
+  theme(legend.position="bottom",
+        legend.direction="horizontal",
+        panel.grid.minor.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank()
+  ) 
+```
+
+
+
+## Category analysis
 [//]: <> (\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../plots/plot3.png})
 
 ```{r plot3, message=FALSE, warning=FALSE}
-
 nobel_data$awardYear_cut <- nobel_data$awardYear_cut <- cut(x=nobel_data$awardDate, 
                                                             breaks="10 years",
                                                             labels = c("1901-1910",
@@ -236,87 +206,10 @@ nobel_no_year_category %>%
   theme(legend.position = "none")
 ```
 
-## Distribution of Nobel prizes by years and age
+## Geographical analysis
 [//]: <> (\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../plots/plot4.png})
 
 ```{r plot4, message=FALSE, warning=FALSE}
-nobel.agg <- nobel_data %>%
-  dplyr::mutate(age_years_cut = cut(age_years, 
-                             breaks = 4,
-                             labels = c('17-37', '38-57', '58-77', '78-97')),
-         age_years_cut = forcats::fct_explicit_na(age_years_cut, paste0('Unknown -\n organization'))) %>% 
-  dplyr::count(age_years_cut, category)
-
-ggplot(nobel.agg, aes(x = age_years_cut, y = category)) + # nowa baza danych
-  geom_tile(aes(fill = n), color = 'black', show.legend = F) +
-  #theme_minimal() + 
-  geom_text(aes(label = n), size = 5, fontface = 'bold', color = 'black', family = "IBM Plex Serif") +
-  labs(title = 'Dispersion of Nobel Prizes',
-       x = "Age",
-       y = "Category") +
-  scale_fill_gradient(low = 'green3', high = 'orange')
-```
-
-## Distribution of Nobel prizes by years and age
-[//]: <> (\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../plots/plot5.png})
-
-```{r plot5, message=FALSE, warning=FALSE}
-
-age_data <- nobel_data %>% 
-  drop_na(age_years) %>%
-  select(awardYear, category, age_days, age_years, name)
-
-ggplot(nobel_data %>% drop_na(age_years),
-       aes(x = awardYear, y = age_years)) +
-  geom_point(aes(colour = ifelse(age_years <= 30 | age_years >= 90, "red", "#d1c700")),
-             size = 4,
-             alpha = 0.5) + 
-  geom_smooth(formula = y ~ x, method = 'loess', se = FALSE, size = 2, color = "#3d3d3d",
-              alpha=0.1) +
-  scale_color_manual(name = "Age",
-                     values = c(nobelgold, "red"),
-                     labels = c("between 30 and 90", "less than 30 or more than 90")) +
-  labs(title = 'Age of Nobel laureates', 
-       x = 'Year', 
-       y = 'Age', 
-       col='') +
-  geom_text_repel(aes(label = ifelse(age_years <= 30 | age_years >= 90, as.character(name), "")),
-                  size = 3,
-                  family = "IBM Plex Serif") +
-  theme(legend.position = "bottom",
-        legend.direction = "horizontal",
-        legend.box = "horizontal")
-
-```
-
-## Distribution of Nobel prizes by years and age
-[//]: <> (\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../plots/plot6.png})
-
-```{r plot6, message=FALSE, warning=FALSE}
-
-median_age <- ddply(age_data, .(category), summarise, median = median(age_years))
-
-ggplot(transform(age_data, category=factor(category, levels = c("Chemistry", "Economic Sciences", "Literature", "Peace", "Physics", "Physiology or Medicine"))), aes(x = awardYear, y = age_years, col = category)) +
-  geom_point(size = 2, alpha= 0.7) +
-  geom_smooth(formula = y ~ x, method = 'loess', se = FALSE, size = 1) +
-  labs(title = 'Age of Nobel Laureates over the years', x = 'Year', y = 'Age') +
-  facet_wrap(vars(category), nrow = 2) + 
-  theme(legend.position = "none",
-        panel.spacing.x = unit(1.5, "lines")) + 
-  scale_colour_brewer(palette="Paired") +
-  geom_hline(aes(yintercept = median, colour = category), data = median_age, linetype = "dashed", size = 1) +
-  geom_text_repel(aes(label=ifelse(age_years<30 | age_years > 85, as.character(nobel_data$knownName), "")),
-                  size=3,
-                  family = "IBM Plex Serif",
-                  colour = "black")
-
-```
-
-## Place of birth
-[//]: <> (\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../plots/plot7.png})
-
-```{r plot7, message=FALSE, warning=FALSE}
-
 nobel_prize_share_by_continent <- nobel_data %>%
   filter(birth_continent %in% c("Europe", "North America", "Asia", "Africa", "Oceania", "South America")) %>% 
   drop_na(birth_continent) %>%
@@ -326,24 +219,22 @@ nobel_prize_share_by_continent <- nobel_data %>%
 ggplot(nobel_prize_share_by_continent, aes(reorder(birth_continent, number), number, fill = birth_continent)) +
   geom_col() +
   labs(title = 'Birth Continent', x = '', y = 'Number of Nobel laureates') +  
-  geom_text(aes(label = number), hjust = -0.3, colour = "#555555", size = 6, fontface = "bold", family = "IBM Plex Serif") +
+  geom_text(aes(label = number), hjust = -0.3, colour = "#3d3d3d", size = 6, fontface = "bold", family = "IBM Plex Serif") +
   scale_y_continuous(limits = c(0, 520)) +
   coord_flip() +
-  scale_fill_brewer(palette = "Set2") +
+  scale_fill_brewer(palette = "Dark2") +
   theme(legend.position = 'none',
         panel.spacing.x = unit(1.5, "lines"),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank())
-
 ```
 
-## Place of birth
-[//]: <> (\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../plots/plot8.png})
+## Geographical analysis
+[//]: <> (\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../plots/plot5.png})
 
-```{r plot8, message=FALSE, warning=FALSE}
-
+```{r plot5, message=FALSE, warning=FALSE}
 country_count <- nobel_data %>%
   drop_na(birth_countryNow) %>%
   select(birth_countryNow) %>%
@@ -354,11 +245,11 @@ country_count <- nobel_data %>%
          birth_countryNow = str_replace(birth_countryNow, 'the Netherlands', 'Netherlands')) %>%
   dplyr::summarise(n = n()) %>%
   mutate(m = case_when(n > 100  ~ "100 +",
-                       n < 100 & n >= 50 ~ "99 - 50",
-                       n < 50 & n >= 20 ~ "49 - 20",
-                       n < 20 & n >= 10 ~ "19 - 10",
+                       n < 100 & n >= 50 ~ "50 - 99",
+                       n < 50 & n >= 20 ~ "20 - 49",
+                       n < 20 & n >= 10 ~ "10 - 19",
                        n < 10  ~ "< 10")) %>%
-  mutate(m = factor(m, levels = c("< 10", "19 - 10", "49 - 20", "99 - 50", "100 +")))
+  mutate(m = factor(m, levels = c("< 10", "10 - 19", "20 - 49", "50 - 99", "100 +")))
 
 map_data <- country_count %>% 
   full_join(map_data("world"), by = c('birth_countryNow' = 'region')) 
@@ -377,14 +268,12 @@ ggplot(map_data, aes(x = long, y = lat, group = group, fill = m)) +
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank()
   )
-
 ```
 
-## Topics of the awarded research papers
-[//]: <> (\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../plots/plot9.png})
+## Awards analysis
+[//]: <> (\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../plots/plot6.png})
 
-```{r plot9, message=FALSE, warning=FALSE}
-
+```{r plot6, message=FALSE, warning=FALSE}
 nobel_data$motivation<-as.character(nobel_data$motivation)
 
 motivation_words <- nobel_data %>%
@@ -410,9 +299,9 @@ bigrams_to_plot <- bigram_filtr_and_unite %>%
   dplyr::mutate(word = reorder_within(bigram, n, category)) 
 
 ggplot(transform(bigrams_to_plot, category=factor(category, levels = c("Chemistry", "Economic Sciences", "Literature", "Peace", "Physics", "Physiology or Medicine"))), aes(x= reorder(word, n), y = n, fill = category)) +
-  geom_col() +
+  geom_col(width = .6) +
   geom_text(aes(label = n), hjust = 1.2, colour = "white", size = 5, fontface = 'bold', family = "IBM Plex Serif") +
-  labs(title = 'Most 5 frequent words in each category', x = '', y = '', fill = '') +
+  labs(title = 'Top 5 most frequent merits per category', x = '', y = '', fill = '') +
   coord_flip() + 
   theme(legend.position = 'none',
         panel.spacing.x = unit(1.5, "lines"),
@@ -427,3 +316,97 @@ ggplot(transform(bigrams_to_plot, category=factor(category, levels = c("Chemistr
   scale_fill_brewer(palette="Paired")
 
 ```
+
+## Age of laureates analysis
+[//]: <> (\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../plots/plot7.png})
+
+```{r plot7, message=FALSE, warning=FALSE}
+combinations <- tidyr::crossing(age_years_cut = c('17-37', '38-57', '58-77', '78-97', 'Unknown'), category = unique(nobel_data$category), n = 0)
+
+nobel.agg <- nobel_data %>%
+  dplyr::mutate(age_years_cut = cut(age_years, 
+                             breaks = 4,
+                             labels = c('17-37', '38-57', '58-77', '78-97')),
+         age_years_cut = forcats::fct_explicit_na(age_years_cut, paste0('Unknown'))) %>% 
+   dplyr::count(age_years_cut, category) 
+
+nobel.agg <- merge(combinations, nobel.agg, by = c("age_years_cut", "category"), all.x =T)
+nobel.agg$n.y[is.na(nobel.agg$n.y)] <- 0
+nobel.agg <- subset(nobel.agg, select=-c(n.x))
+colnames(nobel.agg) <- c("age_years_cut", "category", "n")
+
+ggplot(nobel.agg, aes(x = age_years_cut, y = category)) +
+  geom_tile(aes(fill = n), color = 'black', show.legend = F) +
+  geom_text(aes(label = n), size = 5, fontface = 'bold', color = 'black', family = "IBM Plex Serif") +
+  labs(title = 'Distribution of Nobel Prizes',
+       x = "Age",
+       y = "") +
+  scale_fill_gradient(low = 'white', high = '#1f78b4') +
+  theme(legend.position = 'none',
+        panel.spacing.x = unit(1.5, "lines"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        #axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+```
+
+## Age of laureates analysis
+[//]: <> (\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../plots/plot8.png})
+
+```{r plot8, message=FALSE, warning=FALSE}
+
+age_data <- nobel_data %>% 
+  drop_na(age_years) %>%
+  select(awardYear, category, age_days, age_years, name)
+
+ggplot(nobel_data %>% drop_na(age_years),
+       aes(x = awardYear, y = age_years)) +
+  geom_point(aes(colour = ifelse(age_years <= 30 | age_years >= 90, "red", nobelgold)),
+             size = 4,
+             alpha = 0.5) + 
+  geom_smooth(formula = y ~ x, method = 'loess', se = FALSE, size = 2, color = "#3d3d3d",
+              alpha=0.1) +
+  scale_color_manual(name = "Age",
+                     values = c(nobelgold, "red"),
+                     labels = c("between 30 and 90", "less than 30 or more than 90")) +
+  labs(title = 'Age of Nobel laureates', 
+       x = 'Year', 
+       y = 'Age', 
+       col='') +
+  geom_text_repel(aes(label = ifelse(age_years <= 30 | age_years >= 90, as.character(name), "")),
+                  size = 3,
+                  family = "IBM Plex Serif") +
+  theme(legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.box = "horizontal")
+
+```
+
+## Age of laureates analysis
+[//]: <> (\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../plots/plot9.png})
+
+```{r plot9, message=FALSE, warning=FALSE}
+
+median_age <- ddply(age_data, .(category), summarise, median = median(age_years))
+
+ggplot(transform(age_data, category=factor(category, levels = c("Chemistry", "Economic Sciences", "Literature", "Peace", "Physics", "Physiology or Medicine"))), aes(x = awardYear, y = age_years, col = category)) +
+  geom_point(size = 2, alpha= 0.7) +
+  geom_smooth(formula = y ~ x, method = 'loess', se = FALSE, size = 1) +
+  labs(title = 'Age of Nobel laureates over the years', x = 'Year', y = 'Age') +
+  facet_wrap(vars(category), nrow = 2) + 
+  theme(legend.position = "none",
+        panel.spacing.x = unit(1.5, "lines")) + 
+  scale_colour_brewer(palette="Paired") +
+  geom_hline(aes(yintercept = median, colour = category), data = median_age, linetype = "dashed", size = 1) +
+  geom_text_repel(aes(label = ifelse(age_years <= 30 | age_years >= 90, as.character(name), "")),
+                  size = 3,
+                  family = "IBM Plex Serif",
+                  colour = "black")
+```
+
+
+##
+
+\begin{center}
+\textbf{Thank you for your attention!}
+\end{center}
